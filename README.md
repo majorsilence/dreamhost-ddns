@@ -41,23 +41,25 @@ A record from your own DreamHost zone takes the provider's nameservers out of th
 ## Status
 
 Tested against mock DreamHost, IP-lookup and DNS servers (`tests/`, run in CI) and against a
-live DreamHost account: listing records, adding an A record and the propagation check all behave
-as documented. Removing stale records and replacing a CNAME are covered by the mock tests but
-have not yet been exercised against a live account. Start in dry-run mode and read the plan
-first. Reports of what you see are welcome.
+live DreamHost account: listing records, adding an A record, replacing a CNAME with an A record
+(three names in one run) and the propagation check all behave as documented. Removing a stale
+A record after the IP changes is covered by the mock tests but has not yet been exercised
+against a live account. Start in dry-run mode and read the plan first. Reports of what you see
+are welcome.
 
 ### Propagation timing
 
-DreamHost's own help pages say API changes take "several hours to propagate". In one live test
-a newly added A record (TTL 60 seconds) began to appear on some of DreamHost's three
-authoritative nameservers within a few minutes, then flapped between answering and `NXDOMAIN`
-for a while, and all three answered consistently about 14 minutes after the change; public
-resolvers followed within the record's TTL. That is a single observation, not a guarantee.
+DreamHost's own help pages say API changes take "several hours to propagate". In two live tests
+(a single new A record, then three CNAMEs replaced by A records at once; TTL 60 seconds) the
+change began to appear on some of DreamHost's three authoritative nameservers within a few
+minutes, then **flapped between the old and new answers** for several more, and all three
+nameservers answered consistently about 12–14 minutes after the change; public resolvers followed
+within the record's TTL. Two observations are not a guarantee.
 
 Plan for up to about 15 minutes after a change, and wait for the
 `VERIFIED … on all N nameservers` log line before anything that validates the name from the
-outside, such as requesting a certificate: until then some nameservers still answer
-`NXDOMAIN`, and a validator that hits one of them will fail.
+outside, such as requesting a certificate: until then some nameservers still answer with the old
+record (or `NXDOMAIN` for a new name), and a validator that hits one of them will fail.
 
 ## Requirements
 
