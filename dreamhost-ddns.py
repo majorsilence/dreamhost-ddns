@@ -38,7 +38,7 @@ import urllib.parse
 import urllib.request
 import uuid
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 DEFAULT_IP_SERVICES = [
     "https://api.ipify.org",

@@ -40,12 +40,24 @@ A record from your own DreamHost zone takes the provider's nameservers out of th
 
 ## Status
 
-Written against DreamHost's documented API and tested with mock DreamHost, IP-lookup and
-DNS servers (`tests/`, run in CI) and against the live API's error responses. **DreamHost's
-successful responses and real propagation timing haven't been confirmed on a live
-account yet**, and DreamHost's own help pages claim API changes take "several hours to
-propagate" without documenting a TTL. Start in dry-run mode, then check the first
-`VERIFIED …` log line before relying on it. Reports of what you see are welcome.
+Tested against mock DreamHost, IP-lookup and DNS servers (`tests/`, run in CI) and against a
+live DreamHost account: listing records, adding an A record and the propagation check all behave
+as documented. Removing stale records and replacing a CNAME are covered by the mock tests but
+have not yet been exercised against a live account. Start in dry-run mode and read the plan
+first. Reports of what you see are welcome.
+
+### Propagation timing
+
+DreamHost's own help pages say API changes take "several hours to propagate". In one live test
+a newly added A record (TTL 60 seconds) began to appear on some of DreamHost's three
+authoritative nameservers within a few minutes, then flapped between answering and `NXDOMAIN`
+for a while, and all three answered consistently about 14 minutes after the change; public
+resolvers followed within the record's TTL. That is a single observation, not a guarantee.
+
+Plan for up to about 15 minutes after a change, and wait for the
+`VERIFIED … on all N nameservers` log line before anything that validates the name from the
+outside, such as requesting a certificate: until then some nameservers still answer
+`NXDOMAIN`, and a validator that hits one of them will fail.
 
 ## Requirements
 
@@ -103,7 +115,7 @@ Run it every minute from cron. The default state directory is `/var/lib/dreamhos
 If the name currently has a CNAME, the updater refuses to touch it and says so. Either delete
 the CNAME at DreamHost yourself, or set `DREAMHOST_DDNS_REPLACE_CNAME=1`: the CNAME is removed
 and the A record added straight away (and the CNAME is restored if the add fails). Expect a few
-seconds with no record, plus whatever DreamHost's propagation turns out to be — do this for a
+seconds with no record, plus DreamHost's propagation (see [Status](#status)) — do this for a
 name you can afford to lose briefly, and try a dry run first.
 
 ## Configuration
