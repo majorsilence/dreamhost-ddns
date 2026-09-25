@@ -1,0 +1,11 @@
+[Unit]
+Description=Check this host's public IPv4 address for DreamHost DNS
+Documentation=https://github.com/majorsilence/dreamhost-ddns
+
+[Timer]
+OnActiveSec=15s
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

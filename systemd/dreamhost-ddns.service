@@ -1,0 +1,32 @@
+[Unit]
+Description=Keep DreamHost A records at this host's public IPv4 address
+Documentation=https://github.com/majorsilence/dreamhost-ddns
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Configuration (including the API key) lives in a root-only file that systemd
+# reads itself before the dynamic user takes over.
+EnvironmentFile=/etc/dreamhost-ddns.env
+DynamicUser=yes
+StateDirectory=dreamhost-ddns
+ExecStart=/usr/local/sbin/dreamhost-ddns
+TimeoutStartSec=120
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native

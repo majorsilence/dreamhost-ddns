@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches __version__
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          script_version="$(python3 -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('dreamhost-ddns.py').read()).group(1))")"
+          if [ "$tag_version" != "$script_version" ]; then
+            echo "::error::tag v$tag_version does not match __version__ $script_version"
+            exit 1
+          fi
+
+      - run: python -W error -m unittest discover -s tests
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          stage="dreamhost-ddns-${version}"
+          mkdir "$stage"
+          cp dreamhost-ddns.py README.md LICENSE "$stage/"
+          cp -r systemd "$stage/"
+          tar czf "${stage}.tar.gz" "$stage"
+          sha256sum "${stage}.tar.gz" > sha256sums.txt
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            dreamhost-ddns-*.tar.gz \
+            sha256sums.txt
